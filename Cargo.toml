@@ -2,5 +2,6 @@
 name = "replacer"
 version = "0.1.0"
 authors = ["Danny Kavanagh <dankava13@gmail.com>"]
+description = "A program to find and replace all occurences of a string in a specified directory's files."
 
 [dependencies]
