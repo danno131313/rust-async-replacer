@@ -5,3 +5,4 @@ authors = ["Danny Kavanagh <dankava13@gmail.com>"]
 description = "A program to find and replace all occurences of a string in a specified directory's files."
 
 [dependencies]
+structopt = "0.2.5"
