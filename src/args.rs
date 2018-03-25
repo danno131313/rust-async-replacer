@@ -1,5 +1,5 @@
-use super::*;
 use std::path::PathBuf;
+use super::*;
 
 #[derive(StructOpt, Debug)]
 #[structopt(name="replacer", raw(setting = "structopt::clap::AppSettings::ColoredHelp"))]
