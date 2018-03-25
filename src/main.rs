@@ -50,6 +50,7 @@ fn main() {
         }
     });
 
+    // For every file received by the channel, process it right away
     for file in recv {
         process_file(&target, &replacement, file).unwrap();
     }
