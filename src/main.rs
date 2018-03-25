@@ -1,14 +1,14 @@
 #[macro_use]
 extern crate structopt;
+extern crate rayon;
 
+use rayon::iter::ParallelIterator;
 use args::*;
 use std::fs::{metadata, read_dir};
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::PathBuf;
-use std::sync::{Arc, Mutex};
-use std::sync::mpsc::{channel, Sender};
-use std::thread::spawn;
+use rayon::iter::IntoParallelIterator;
 use structopt::StructOpt;
 
 
@@ -25,38 +25,31 @@ fn main() {
     let target = opt.target.clone();
     let replacement = opt.replacement.clone();
 
-    // Channel to receive files to work on
-    let (send, recv) = channel();
-    let sender = Arc::new(Mutex::new(send));
+    let mut files = Vec::new();
 
-    // Start a thread to search directories and add files to the channel
-    spawn(move || {
-        for path in opt.files {
-            let metadata_result = metadata(&path);
+    for path in opt.files {
+        let metadata_result = metadata(&path);
 
-            if metadata_result.is_err() {
-                println!("Couldn't read file {:?}", &path);
-                continue;
-            }
-
-            let mdata = metadata_result.unwrap();
-
-            if mdata.is_dir() {
-                process_dir(path, sender.clone()).unwrap();
-            } else {
-                let x = sender.lock().unwrap();
-                x.send(path).unwrap();
-            }
+        if metadata_result.is_err() {
+            println!("Couldn't read file {:?}", &path);
+            continue;
         }
-    });
 
-    // For every file received by the channel, process it right away
-    for file in recv {
-        process_file(&target, &replacement, file).unwrap();
+        let mdata = metadata_result.unwrap();
+
+        if mdata.is_dir() {
+            process_dir(path, &mut files).unwrap();
+        } else {
+            files.push(path);
+        }
     }
+
+    let _: Vec<()> = files.into_par_iter().map(|file: PathBuf| {
+        process_file(&target, &replacement, file).unwrap();
+    }).collect();
 }
 
-fn process_dir(path: PathBuf, send: Arc<Mutex<Sender<PathBuf>>>) -> Result<(), std::io::Error> {
+fn process_dir(path: PathBuf, files: &mut Vec<PathBuf>) -> Result<(), std::io::Error> {
     let dir = read_dir(path)?;
 
     for item in dir {
@@ -64,10 +57,9 @@ fn process_dir(path: PathBuf, send: Arc<Mutex<Sender<PathBuf>>>) -> Result<(), s
         let mdata = result.metadata()?;
 
         if mdata.is_dir() {
-            process_dir(result, send.clone())?;
+            process_dir(result, files)?;
         } else {
-            let x = send.lock().unwrap();
-            x.send(result).unwrap();
+            files.push(result);
         }
     }
 

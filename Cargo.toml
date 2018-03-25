@@ -6,3 +6,4 @@ description = "A program to find and replace all occurences of a string in a spe
 
 [dependencies]
 structopt = "0.2.5"
+rayon = "1.0.1"
