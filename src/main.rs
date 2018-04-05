@@ -5,8 +5,8 @@ extern crate structopt;
 use args::*;
 use rayon::iter::IntoParallelIterator;
 use rayon::iter::ParallelIterator;
-use std::fs::{metadata, read_dir};
 use std::fs::File;
+use std::fs::{metadata, read_dir};
 use std::io::{Read, Write};
 use std::path::PathBuf;
 use structopt::StructOpt;
@@ -43,12 +43,9 @@ fn main() {
         }
     }
 
-    let _: Vec<()> = files
-        .into_par_iter()
-        .map(|file: PathBuf| {
-            process_file(&target, &replacement, file).unwrap();
-        })
-        .collect();
+    files.into_par_iter().for_each(|file: PathBuf| {
+        process_file(&target, &replacement, file).unwrap();
+    });
 }
 
 fn process_dir(path: PathBuf, files: &mut Vec<PathBuf>) -> Result<(), std::io::Error> {
